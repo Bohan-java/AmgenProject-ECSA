@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agros AI - Smart Farming Assistant</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #e8f5e8 0%, #d4edda 50%, #c3e6cb 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow-x: hidden;
+    }
+    
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 20% 80%, rgba(76, 175, 80, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(139, 195, 74, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(129, 199, 132, 0.05) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: -1;
+    }
+    .weather-container {
+      background: linear-gradient(145deg, #ffffff 0%, #f8fffe 100%);
+      padding: 2.5rem 3rem;
+      border-radius: 20px;
+      box-shadow: 
+        0 8px 32px rgba(76, 175, 80, 0.15),
+        0 4px 16px rgba(0,0,0,0.1),
+        inset 0 1px 0 rgba(255,255,255,0.8);
+      width: 420px;
+      text-align: center;
+      border: 1px solid rgba(76, 175, 80, 0.2);
+      position: relative;
+      backdrop-filter: blur(10px);
+    }
+    
+    .weather-container::before {
+      content: '🌾';
+      position: absolute;
+      top: -15px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 2rem;
+      background: linear-gradient(45deg, #4caf50, #8bc34a);
+      color: white;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+    }
+    input[type="text"] {
+      padding: 0.8rem 1rem;
+      width: 70%;
+      border: 2px solid rgba(76, 175, 80, 0.3);
+      border-radius: 12px;
+      margin-bottom: 1rem;
+      font-size: 1rem;
+      background: rgba(255, 255, 255, 0.9);
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(76, 175, 80, 0.1);
+    }
+    
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #4caf50;
+      box-shadow: 0 4px 16px rgba(76, 175, 80, 0.2);
+      transform: translateY(-2px);
+    }
+    button {
+      padding: 0.8rem 1.5rem;
+      background: linear-gradient(45deg, #4caf50, #8bc34a);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      margin-left: 0.5rem;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s;
+    }
+    
+    button:hover::before {
+      left: 100%;
+    }
+    
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+    }
+    
+    button:active {
+      transform: translateY(0);
+    }
+    
+    button:disabled {
+      background: linear-gradient(45deg, #a5d6a7, #c8e6c9);
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2);
+    }
+    .loading {
+      color: #4caf50;
+      margin: 1rem 0;
+      font-weight: 500;
+    }
+    .error {
+      color: #f44336;
+      margin: 1rem 0;
+      font-weight: 500;
+    }
+    .weather-result {
+      margin-top: 1.5rem;
+      font-size: 1.1rem;
+    }
+    .city-name {
+      font-weight: bold;
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+    }
+    .weather-icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 1rem;
+    }
+    .temperature {
+      font-size: 2.5rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+    }
+    .description {
+      font-size: 1.2rem;
+      margin-bottom: 1.5rem;
+      text-transform: capitalize;
+    }
+    .weather-details {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    .detail-item {
+      background: linear-gradient(145deg, #f1f8e9 0%, #e8f5e8 100%);
+      padding: 1rem;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      border: 1px solid rgba(76, 175, 80, 0.2);
+      box-shadow: 0 2px 8px rgba(76, 175, 80, 0.1);
+      transition: transform 0.2s ease;
+    }
+    
+    .detail-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(76, 175, 80, 0.15);
+    }
+        .detail-label {
+      color: #2e7d32;
+      font-size: 0.8rem;
+      margin-bottom: 0.3rem;
+      font-weight: 500;
+    }
+    .detail-value {
+      font-weight: bold;
+      color: #1b5e20;
+    }
+        #advice {
+          margin-top: 1.5rem;
+          padding: 1rem;
+          background: #f0f8ff;
+          border-radius: 8px;
+          border-left: 4px solid #0077ff;
+        }
+        .advice-loading {
+          color: #0077ff;
+          font-style: italic;
+        }
+        .advice-content {
+          line-height: 1.6;
+        }
+            .premium-badge {
+      background: linear-gradient(45deg, #ffd700, #ffed4e);
+      color: #333;
+      padding: 0.4rem 1rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      display: inline-block;
+      margin-left: 0.5rem;
+      box-shadow: 0 3px 8px rgba(255, 215, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+            .premium-section {
+      border: 2px solid #ffd700;
+      border-radius: 12px;
+      padding: 1.5rem;
+      background: linear-gradient(135deg, #fff9e6 0%, #fff 100%);
+      position: relative;
+      box-shadow: 0 4px 16px rgba(255, 215, 0, 0.15);
+    }
+    .premium-section::before {
+      content: "⭐ PREMIUM FEATURE";
+      position: absolute;
+      top: -12px;
+      left: 15px;
+      background: linear-gradient(45deg, #ffd700, #ffed4e);
+      color: #333;
+      padding: 4px 12px;
+      border-radius: 15px;
+      font-size: 0.7rem;
+      font-weight: bold;
+      box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+    }
+        #crops {
+          margin-top: 1.5rem;
+        }
+        .crops-header {
+          font-size: 1.2rem;
+          font-weight: bold;
+          margin-bottom: 1rem;
+          color: #2e7d32;
+        }
+        .crop-item {
+          background: linear-gradient(145deg, #f1f8e9 0%, #e8f5e8 100%);
+          border: 1px solid rgba(76, 175, 80, 0.3);
+          border-radius: 12px;
+          padding: 1.2rem;
+          margin-bottom: 1rem;
+          box-shadow: 0 2px 8px rgba(76, 175, 80, 0.1);
+          transition: transform 0.2s ease;
+        }
+        
+        .crop-item:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(76, 175, 80, 0.15);
+        }
+        .crop-name {
+          font-weight: bold;
+          font-size: 1.1rem;
+          color: #2e7d32;
+          margin-bottom: 0.5rem;
+        }
+        .crop-stats {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 0.5rem;
+          font-size: 0.9rem;
+        }
+        .crop-stat {
+          display: flex;
+          justify-content: space-between;
+        }
+        .crop-stat-label {
+          color: #2e7d32;
+          font-weight: 500;
+        }
+        .crop-stat-value {
+          font-weight: bold;
+        }
+        .suitability-high {
+          color: #28a745;
+        }
+        .suitability-medium {
+          color: #ffc107;
+        }
+        .suitability-low {
+          color: #dc3545;
+        }
+        #market-data {
+          margin-top: 1.5rem;
+        }
+        .market-section {
+          background: linear-gradient(145deg, #f1f8e9 0%, #e8f5e8 100%);
+          border: 1px solid rgba(76, 175, 80, 0.3);
+          border-radius: 12px;
+          padding: 1.5rem;
+          margin-bottom: 1rem;
+          box-shadow: 0 4px 16px rgba(76, 175, 80, 0.1);
+        }
+        .market-header {
+          font-size: 1.2rem;
+          font-weight: bold;
+          margin-bottom: 1rem;
+          color: #2e7d32;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+        .market-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1rem;
+        }
+        .market-item {
+          background: linear-gradient(145deg, #ffffff 0%, #f8fffe 100%);
+          border: 1px solid rgba(76, 175, 80, 0.2);
+          border-radius: 10px;
+          padding: 1rem;
+          box-shadow: 0 2px 8px rgba(76, 175, 80, 0.1);
+          transition: transform 0.2s ease;
+        }
+        
+        .market-item:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(76, 175, 80, 0.15);
+        }
+        .market-item-title {
+          font-weight: bold;
+          color: #2e7d32;
+          margin-bottom: 0.5rem;
+          font-size: 0.9rem;
+        }
+        .market-item-value {
+          font-size: 1.1rem;
+          font-weight: bold;
+          color: #1b5e20;
+        }
+        .disease-alert {
+          background: linear-gradient(145deg, #fff8e1 0%, #fff3e0 100%);
+          border: 1px solid #ffb74d;
+          border-radius: 10px;
+          padding: 1rem;
+          margin-top: 0.8rem;
+          box-shadow: 0 2px 8px rgba(255, 183, 77, 0.2);
+        }
+        .disease-alert.high {
+          background: linear-gradient(145deg, #ffebee 0%, #ffcdd2 100%);
+          border-color: #ef5350;
+          box-shadow: 0 2px 8px rgba(239, 83, 80, 0.3);
+        }
+        .price-trend {
+          font-size: 0.8rem;
+          margin-top: 0.3rem;
+        }
+        .price-up {
+          color: #28a745;
+        }
+        .price-down {
+          color: #dc3545;
+        }
+        .price-stable {
+          color: #6c757d;
+        }
+  </style>
+</head>
+<body>
+      <div class="weather-container">
+      <h2>Weather & Crop Advisor</h2>
+      <input type="text" id="cityInput" placeholder="Enter city name" autocomplete="off" />
+      <div id="suggestions" style="position:relative;"></div>
+      <button id="fetchBtn">Get Weather & Crops</button>
+      <div id="message"></div>
+      <div class="weather-result" id="weatherResult"></div>
+      <div id="crops"></div>
+      <div id="market-data"></div>
+      <div id="disease-solutions"></div>
+      <div id="advice"></div>
+    </div>
+  <script>
+    const apiKey = 'a2bbc13feea53dd04a58b5b7893660c5'; // <-- Replace with your OpenWeatherMap API key
+    const openaiApiKey = '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'; // <-- Replace with your OpenAI API key
+    const fetchBtn = document.getElementById('fetchBtn');
+    const cityInput = document.getElementById('cityInput');
+    const messageDiv = document.getElementById('message');
+    const weatherResult = document.getElementById('weatherResult');
+    const suggestionsDiv = document.getElementById('suggestions');
+    const adviceDiv = document.getElementById('advice');
+    const cropsDiv = document.getElementById('crops');
+    const marketDataDiv = document.getElementById('market-data');
+    const diseaseSolutionsDiv = document.getElementById('disease-solutions');
+
+    function showMessage(msg, type = '') {
+      messageDiv.textContent = msg;
+      messageDiv.className = type;
+    }
+
+    function showWeather(data) {
+      const sunrise = new Date(data.sys.sunrise * 1000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+      const sunset = new Date(data.sys.sunset * 1000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+      
+      // Convert Celsius to Fahrenheit
+      const tempC = Math.round(data.main.temp);
+      const tempF = Math.round((tempC * 9/5) + 32);
+      const feelsLikeC = Math.round(data.main.feels_like);
+      const feelsLikeF = Math.round((feelsLikeC * 9/5) + 32);
+      
+      weatherResult.innerHTML = `
+        <div class="city-name">${data.name}, ${data.sys.country}</div>
+        <img class="weather-icon" src="https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png" alt="Weather icon">
+        <div class="temperature">${tempC}°C / ${tempF}°F</div>
+        <div class="description">${data.weather[0].description}</div>
+        <div class="weather-details">
+          <div class="detail-item">
+            <div class="detail-label">Feels Like</div>
+            <div class="detail-value">${feelsLikeC}°C / ${feelsLikeF}°F</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Humidity</div>
+            <div class="detail-value">${data.main.humidity}%</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Wind Speed</div>
+            <div class="detail-value">${data.wind.speed} m/s</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Pressure</div>
+            <div class="detail-value">${data.main.pressure} hPa</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Sunrise</div>
+            <div class="detail-value">${sunrise}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Sunset</div>
+            <div class="detail-value">${sunset}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function clearWeather() {
+      weatherResult.innerHTML = '';
+      adviceDiv.innerHTML = '';
+      cropsDiv.innerHTML = '';
+      marketDataDiv.innerHTML = '';
+      diseaseSolutionsDiv.innerHTML = '';
+    }
+
+    function showSuggestions(suggestions) {
+      if (!suggestions.length) {
+        suggestionsDiv.innerHTML = '';
+        return;
+      }
+      suggestionsDiv.innerHTML = '<ul style="list-style:none;padding:0;margin:0;position:absolute;left:0;right:0;background:#fff;border:1px solid #ccc;border-radius:0 0 6px 6px;z-index:10;max-height:180px;overflow-y:auto;">' +
+        suggestions.map(city => `<li style="padding:8px;cursor:pointer;" data-city='${JSON.stringify(city)}'>${city.name}${city.state ? ', ' + city.state : ''}, ${city.country}</li>`).join('') +
+        '</ul>';
+    }
+
+    function clearSuggestions() {
+      suggestionsDiv.innerHTML = '';
+    }
+
+    fetchBtn.addEventListener('click', () => {
+      const city = cityInput.value.trim();
+      if (!city) {
+        showMessage('Please enter a city name.', 'error');
+        clearWeather();
+        return;
+      }
+      showMessage('Loading...', 'loading');
+      clearWeather();
+      fetchBtn.disabled = true;
+      fetch(`https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${apiKey}&units=metric`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('City not found');
+          }
+          return response.json();
+        })
+        .then(data => {
+          showMessage('');
+          showWeather(data);
+          getCropRecommendations(data);
+          getMarketData(data);
+          getDiseaseSolutions(data);
+          getFarmingAdvice(data);
+        })
+        .catch(err => {
+          showMessage(err.message, 'error');
+        })
+        .finally(() => {
+          fetchBtn.disabled = false;
+        });
+    });
+
+    cityInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        fetchBtn.click();
+      }
+    });
+
+    cityInput.addEventListener('input', () => {
+      const query = cityInput.value.trim();
+      clearSuggestions();
+      if (query.length < 2) return;
+      fetch(`https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(query)}&limit=5&appid=${apiKey}`)
+        .then(res => res.json())
+        .then(data => {
+          showSuggestions(data);
+        })
+        .catch(() => {});
+    });
+
+    suggestionsDiv.addEventListener('mousedown', (e) => {
+      if (e.target.tagName === 'LI' && e.target.dataset.city) {
+        const city = JSON.parse(e.target.dataset.city);
+        cityInput.value = `${city.name}${city.state ? ', ' + city.state : ''}, ${city.country}`;
+        clearSuggestions();
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!suggestionsDiv.contains(e.target) && e.target !== cityInput) {
+        clearSuggestions();
+      }
+    });
+
+    let lastWeatherData = null;
+    let isAdviceLoading = false;
+
+    async function getFarmingAdvice(weatherData) {
+      // Check if we already have advice for this weather data
+      const weatherKey = `${weatherData.main.temp}_${weatherData.main.humidity}_${weatherData.weather[0].description}`;
+      
+      if (lastWeatherData === weatherKey) {
+        return; // Don't make duplicate calls for the same weather
+      }
+      
+      if (isAdviceLoading) {
+        return; // Don't make multiple simultaneous calls
+      }
+      
+      // Create weather summary
+      const tempC = Math.round(weatherData.main.temp);
+      const tempF = Math.round((tempC * 9/5) + 32);
+      const humidity = weatherData.main.humidity;
+      const description = weatherData.weather[0].description;
+      const windSpeed = weatherData.wind.speed;
+      
+      const weatherSummary = `Temperature: ${tempC}°C (${tempF}°F), Humidity: ${humidity}%, Weather: ${description}, Wind Speed: ${windSpeed} m/s`;
+      
+      // Show loading message
+      adviceDiv.innerHTML = `
+        <div class="premium-section">
+          <div class="advice-loading">Loading AI farming advice... <span class="premium-badge">PREMIUM</span></div>
+        </div>
+      `;
+      
+      isAdviceLoading = true;
+      lastWeatherData = weatherKey;
+      
+      try {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${openaiApiKey}`
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [
+              {
+                role: 'user',
+                content: `Given this weather, provide farming advice: ${weatherSummary}`
+              }
+            ],
+            max_tokens: 300,
+            temperature: 0.7
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to get farming advice');
+        }
+        
+        const data = await response.json();
+        const advice = data.choices[0].message.content;
+        
+        adviceDiv.innerHTML = `
+          <div class="premium-section">
+            <h3>🌾 AI Farming Advice <span class="premium-badge">PREMIUM</span></h3>
+            <div class="advice-content">${advice}</div>
+          </div>
+        `;
+        
+      } catch (error) {
+        adviceDiv.innerHTML = `
+          <div class="premium-section">
+            <div style="color: #ff3333;">
+              <h3>🌾 AI Farming Advice <span class="premium-badge">PREMIUM</span></h3>
+              <p>Unable to load farming advice at this time. Please check your plan and try again.</p>
+            </div>
+          </div>
+        `;
+        lastWeatherData = null; // Reset so user can retry
+      } finally {
+        isAdviceLoading = false;
+      }
+    }
+
+    // Crop suitability data (placeholder - replace with actual API/dataset)
+    const cropDatabase = {
+      // Temperature ranges in Celsius, humidity in %, rainfall in mm
+      crops: [
+        {
+          name: "Wheat",
+          tempMin: 10,
+          tempMax: 25,
+          humidityMin: 40,
+          humidityMax: 80,
+          popularity: "Very High",
+          globalYield: "750 million tons/year",
+          failureRate: "8-12%",
+          suitability: "high"
+        },
+        {
+          name: "Rice",
+          tempMin: 20,
+          tempMax: 35,
+          humidityMin: 60,
+          humidityMax: 90,
+          popularity: "Very High",
+          globalYield: "500 million tons/year",
+          failureRate: "5-10%",
+          suitability: "medium"
+        },
+        {
+          name: "Corn/Maize",
+          tempMin: 15,
+          tempMax: 30,
+          humidityMin: 50,
+          humidityMax: 85,
+          popularity: "Very High",
+          globalYield: "1.1 billion tons/year",
+          failureRate: "10-15%",
+          suitability: "high"
+        },
+        {
+          name: "Soybeans",
+          tempMin: 18,
+          tempMax: 28,
+          humidityMin: 45,
+          humidityMax: 80,
+          popularity: "High",
+          globalYield: "350 million tons/year",
+          failureRate: "12-18%",
+          suitability: "medium"
+        },
+        {
+          name: "Potatoes",
+          tempMin: 8,
+          tempMax: 22,
+          humidityMin: 50,
+          humidityMax: 85,
+          popularity: "High",
+          globalYield: "370 million tons/year",
+          failureRate: "15-20%",
+          suitability: "high"
+        },
+        {
+          name: "Tomatoes",
+          tempMin: 15,
+          tempMax: 30,
+          humidityMin: 40,
+          humidityMax: 75,
+          popularity: "High",
+          globalYield: "180 million tons/year",
+          failureRate: "20-25%",
+          suitability: "medium"
+        },
+        {
+          name: "Lettuce",
+          tempMin: 10,
+          tempMax: 20,
+          humidityMin: 60,
+          humidityMax: 85,
+          popularity: "Medium",
+          globalYield: "27 million tons/year",
+          failureRate: "25-30%",
+          suitability: "low"
+        },
+        {
+          name: "Carrots",
+          tempMin: 8,
+          tempMax: 25,
+          humidityMin: 50,
+          humidityMax: 80,
+          popularity: "Medium",
+          globalYield: "40 million tons/year",
+          failureRate: "18-22%",
+          suitability: "medium"
+        }
+      ]
+    };
+
+    function getCropRecommendations(weatherData) {
+      const temp = weatherData.main.temp;
+      const humidity = weatherData.main.humidity;
+      
+      // Filter crops based on current weather conditions
+      const suitableCrops = cropDatabase.crops.filter(crop => {
+        return temp >= crop.tempMin && temp <= crop.tempMax && 
+               humidity >= crop.humidityMin && humidity <= crop.humidityMax;
+      });
+      
+      // Sort by suitability (high, medium, low)
+      const suitabilityOrder = { high: 1, medium: 2, low: 3 };
+      suitableCrops.sort((a, b) => suitabilityOrder[a.suitability] - suitabilityOrder[b.suitability]);
+      
+      if (suitableCrops.length === 0) {
+        cropsDiv.innerHTML = `
+          <div class="crops-header">🌱 Crop Recommendations</div>
+          <p style="color: #666; font-style: italic;">No crops found suitable for current weather conditions.</p>
+        `;
+        return;
+      }
+      
+      let cropsHTML = `
+        <div class="crops-header">🌱 Suitable Crops (${suitableCrops.length} found)</div>
+      `;
+      
+      suitableCrops.forEach(crop => {
+        const suitabilityClass = `suitability-${crop.suitability}`;
+        cropsHTML += `
+          <div class="crop-item">
+            <div class="crop-name ${suitabilityClass}">${crop.name}</div>
+            <div class="crop-stats">
+              <div class="crop-stat">
+                <span class="crop-stat-label">Popularity:</span>
+                <span class="crop-stat-value">${crop.popularity}</span>
+              </div>
+              <div class="crop-stat">
+                <span class="crop-stat-label">Global Yield:</span>
+                <span class="crop-stat-value">${crop.globalYield}</span>
+              </div>
+              <div class="crop-stat">
+                <span class="crop-stat-label">Failure Rate:</span>
+                <span class="crop-stat-value">${crop.failureRate}</span>
+              </div>
+              <div class="crop-stat">
+                <span class="crop-stat-label">Suitability:</span>
+                <span class="crop-stat-value ${suitabilityClass}">${crop.suitability.charAt(0).toUpperCase() + crop.suitability.slice(1)}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      
+      cropsDiv.innerHTML = cropsHTML;
+    }
+
+    // Market data and additional farming information (placeholder data)
+    const marketDatabase = {
+      // Disease risk based on weather conditions
+      diseases: {
+        highHumidity: ['Powdery Mildew', 'Downy Mildew', 'Bacterial Blight'],
+        highTemp: ['Heat Stress', 'Sunburn', 'Fruit Cracking'],
+        lowTemp: ['Frost Damage', 'Cold Stress', 'Delayed Growth'],
+        wetConditions: ['Root Rot', 'Fungal Infections', 'Leaf Spot']
+      },
+      
+      // Sample market prices (USD per ton)
+      prices: {
+        'Wheat': { current: 280, trend: 'up', change: '+5%' },
+        'Rice': { current: 420, trend: 'stable', change: '0%' },
+        'Corn/Maize': { current: 180, trend: 'down', change: '-3%' },
+        'Soybeans': { current: 520, trend: 'up', change: '+8%' },
+        'Potatoes': { current: 320, trend: 'stable', change: '0%' },
+        'Tomatoes': { current: 680, trend: 'up', change: '+12%' },
+        'Lettuce': { current: 1200, trend: 'down', change: '-7%' },
+        'Carrots': { current: 450, trend: 'up', change: '+4%' }
+      },
+      
+      // Labor availability (1-10 scale, 10 being highest)
+      laborAvailability: {
+        'Spring': 8,
+        'Summer': 9,
+        'Fall': 7,
+        'Winter': 4
+      },
+      
+      // Seasonal factors
+      seasons: {
+        'Spring': { planting: 'Optimal', harvesting: 'Limited' },
+        'Summer': { planting: 'Limited', harvesting: 'Peak' },
+        'Fall': { planting: 'Good', harvesting: 'Good' },
+        'Winter': { planting: 'Poor', harvesting: 'Limited' }
+      }
+    };
+
+    function getMarketData(weatherData) {
+      const temp = weatherData.main.temp;
+      const humidity = weatherData.main.humidity;
+      const description = weatherData.main.description || weatherData.weather[0].description;
+      
+      // Determine current season
+      const month = new Date().getMonth();
+      let currentSeason = 'Spring';
+      if (month >= 6 && month <= 8) currentSeason = 'Summer';
+      else if (month >= 9 && month <= 11) currentSeason = 'Fall';
+      else if (month >= 12 || month <= 2) currentSeason = 'Winter';
+      
+      // Identify disease risks
+      const diseaseRisks = [];
+      if (humidity > 70) diseaseRisks.push(...marketDatabase.diseases.highHumidity);
+      if (temp > 30) diseaseRisks.push(...marketDatabase.diseases.highTemp);
+      if (temp < 5) diseaseRisks.push(...marketDatabase.diseases.lowTemp);
+      if (description.includes('rain') || description.includes('drizzle')) {
+        diseaseRisks.push(...marketDatabase.diseases.wetConditions);
+      }
+      
+      // Get labor availability
+      const laborScore = marketDatabase.laborAvailability[currentSeason];
+      const seasonInfo = marketDatabase.seasons[currentSeason];
+      
+      let marketHTML = `
+        <div class="market-section">
+          <div class="market-header">📊 Market & Farming Intelligence</div>
+          <div class="market-grid">
+            <div class="market-item">
+              <div class="market-item-title">Labor Availability</div>
+              <div class="market-item-value">${laborScore}/10 (${currentSeason})</div>
+              <div style="font-size: 0.8rem; color: #666; margin-top: 0.3rem;">
+                Planting: ${seasonInfo.planting} | Harvesting: ${seasonInfo.harvesting}
+              </div>
+            </div>
+            <div class="market-item">
+              <div class="market-item-title">Current Season</div>
+              <div class="market-item-value">${currentSeason}</div>
+              <div style="font-size: 0.8rem; color: #666; margin-top: 0.3rem;">
+                Month: ${new Date().toLocaleString('default', { month: 'long' })}
+              </div>
+            </div>
+          </div>
+      `;
+      
+      // Add disease alerts if any
+      if (diseaseRisks.length > 0) {
+        const alertClass = diseaseRisks.length > 3 ? 'high' : '';
+        marketHTML += `
+          <div class="disease-alert ${alertClass}">
+            <strong>⚠️ Disease Risk Alert:</strong> ${diseaseRisks.slice(0, 3).join(', ')}
+            ${diseaseRisks.length > 3 ? ` and ${diseaseRisks.length - 3} more` : ''}
+          </div>
+        `;
+      }
+      
+      // Add top crop prices
+      const topCrops = ['Wheat', 'Corn/Maize', 'Soybeans', 'Rice'];
+      marketHTML += `
+        <div style="margin-top: 1rem;">
+          <div style="font-weight: bold; margin-bottom: 0.5rem; color: #495057;">Top Crop Prices (USD/ton):</div>
+          <div class="market-grid">
+      `;
+      
+      topCrops.forEach(crop => {
+        const priceData = marketDatabase.prices[crop];
+        if (priceData) {
+          const trendClass = priceData.trend === 'up' ? 'price-up' : 
+                           priceData.trend === 'down' ? 'price-down' : 'price-stable';
+          const trendIcon = priceData.trend === 'up' ? '↗️' : 
+                          priceData.trend === 'down' ? '↘️' : '→';
+          
+          marketHTML += `
+            <div class="market-item">
+              <div class="market-item-title">${crop}</div>
+              <div class="market-item-value">$${priceData.current}</div>
+              <div class="price-trend ${trendClass}">
+                ${trendIcon} ${priceData.change}
+              </div>
+            </div>
+          `;
+        }
+      });
+      
+      marketHTML += `
+          </div>
+        </div>
+      </div>
+      `;
+      
+      marketDataDiv.innerHTML = marketHTML;
+    }
+
+    // Disease solutions database (placeholder - can be expanded or connected to APIs)
+    const diseaseSolutionsDatabase = {
+      'Powdery Mildew': {
+        description: 'Fungal disease that appears as white powdery spots on leaves',
+        solutions: [
+          'Apply fungicides containing sulfur or neem oil',
+          'Improve air circulation by spacing plants properly',
+          'Avoid overhead watering - water at soil level',
+          'Remove and destroy infected plant parts',
+          'Use resistant crop varieties when possible'
+        ],
+        prevention: 'Maintain proper plant spacing and avoid high humidity conditions'
+      },
+      'Downy Mildew': {
+        description: 'Water mold that causes yellow spots on upper leaf surfaces',
+        solutions: [
+          'Apply copper-based fungicides',
+          'Remove infected leaves immediately',
+          'Improve drainage and reduce humidity',
+          'Use fans to increase air circulation',
+          'Apply preventive fungicides before symptoms appear'
+        ],
+        prevention: 'Avoid overhead irrigation and maintain good air flow'
+      },
+      'Bacterial Blight': {
+        description: 'Bacterial disease causing water-soaked lesions on leaves',
+        solutions: [
+          'Remove and destroy infected plants',
+          'Apply copper-based bactericides',
+          'Avoid working in wet fields',
+          'Use disease-free seeds and transplants',
+          'Practice crop rotation to break disease cycle'
+        ],
+        prevention: 'Use certified disease-free seeds and avoid overhead irrigation'
+      },
+      'Heat Stress': {
+        description: 'Plant damage caused by excessive heat and sun exposure',
+        solutions: [
+          'Provide shade using shade cloth or row covers',
+          'Increase irrigation frequency during hot periods',
+          'Apply mulch to keep soil cool and retain moisture',
+          'Plant heat-tolerant crop varieties',
+          'Time planting to avoid peak heat periods'
+        ],
+        prevention: 'Choose heat-resistant varieties and provide adequate shade'
+      },
+      'Sunburn': {
+        description: 'Direct sun damage causing white or brown patches on fruits',
+        solutions: [
+          'Provide shade using shade cloth or companion plants',
+          'Avoid pruning during hot weather',
+          'Maintain adequate leaf cover to shade fruits',
+          'Use reflective mulches to reduce heat',
+          'Harvest fruits before they become overripe'
+        ],
+        prevention: 'Maintain good leaf coverage and provide afternoon shade'
+      },
+      'Frost Damage': {
+        description: 'Cold temperature damage causing blackened or wilted plant tissue',
+        solutions: [
+          'Cover plants with frost blankets or row covers',
+          'Use overhead irrigation to create protective ice layer',
+          'Apply anti-transpirants to reduce water loss',
+          'Plant frost-tolerant varieties',
+          'Delay planting until frost risk has passed'
+        ],
+        prevention: 'Monitor weather forecasts and use frost protection measures'
+      },
+      'Root Rot': {
+        description: 'Fungal disease affecting plant roots, causing wilting and death',
+        solutions: [
+          'Improve soil drainage by adding organic matter',
+          'Avoid overwatering and waterlogged conditions',
+          'Apply fungicides to soil before planting',
+          'Use raised beds for better drainage',
+          'Practice crop rotation with non-susceptible crops'
+        ],
+        prevention: 'Ensure proper drainage and avoid overwatering'
+      },
+      'Fungal Infections': {
+        description: 'Various fungal diseases affecting different plant parts',
+        solutions: [
+          'Apply appropriate fungicides based on specific fungus',
+          'Remove and destroy infected plant material',
+          'Improve air circulation and reduce humidity',
+          'Use resistant crop varieties',
+          'Practice proper crop rotation'
+        ],
+        prevention: 'Maintain good cultural practices and use resistant varieties'
+      }
+    };
+
+    async function getDiseaseSolutions(weatherData) {
+      const temp = weatherData.main.temp;
+      const humidity = weatherData.main.humidity;
+      const description = weatherData.main.description || weatherData.weather[0].description;
+      
+      // Identify disease risks (same logic as in getMarketData)
+      const diseaseRisks = [];
+      if (humidity > 70) diseaseRisks.push(...marketDatabase.diseases.highHumidity);
+      if (temp > 30) diseaseRisks.push(...marketDatabase.diseases.highTemp);
+      if (temp < 5) diseaseRisks.push(...marketDatabase.diseases.lowTemp);
+      if (description.includes('rain') || description.includes('drizzle')) {
+        diseaseRisks.push(...marketDatabase.diseases.wetConditions);
+      }
+      
+      // Always show the premium upgrade message
+      diseaseSolutionsDiv.innerHTML = `
+        <div class="premium-section">
+          <div style="color: #ff3333;">
+            <h3>🩺 Disease Solutions <span class="premium-badge">PREMIUM</span></h3>
+            <p>Unable to load disease solutions. Please check your plan or upgrade to Premium to access detailed disease treatment and prevention strategies.</p>
+            <p style="margin-top: 0.5rem; font-size: 0.9rem; color: #666;">
+              <strong>Premium includes:</strong> Disease identification, treatment solutions, prevention methods, and expert recommendations.
+            </p>
+          </div>
+        </div>
+      `;
+    }
+  </script>
+  
+  <!-- Cool Signature -->
+  <div style="
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: linear-gradient(45deg, #2d5a27 0%, #4a7c59 50%, #6b8e23 100%);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 25px;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    font-size: 14px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    z-index: 1000;
+    transform: rotate(-2deg);
+    animation: signatureGlow 3s ease-in-out infinite alternate;
+    border: 2px solid rgba(255,255,255,0.3);
+  ">
+    <span style="margin-right: 8px;">🌱</span>
+    Produced by ECSA_07
+    <span style="margin-left: 8px;">🌿</span>
+  </div>
+
+  <style>
+    @keyframes signatureGlow {
+      0% {
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        transform: rotate(-2deg) scale(1);
+      }
+      100% {
+        box-shadow: 0 6px 25px rgba(45, 90, 39, 0.4);
+        transform: rotate(-2deg) scale(1.02);
+      }
+    }
+    
+    .signature:hover {
+      animation-play-state: paused;
+      transform: rotate(0deg) scale(1.05);
+      transition: all 0.3s ease;
+    }
+  </style>
+</body>
+</html> 
